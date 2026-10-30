@@ -23,6 +23,13 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Install Vulkan SDK
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          vulkan_version: 1.3.290.0
+          cache: true
+          stripdown: true
+
       - name: Configure MSYS2
         uses: msys2/setup-msys2@v2
         with:
@@ -64,6 +71,7 @@ jobs:
           cmake --version
           gcc --version
           python --version
+          echo "Vulkan SDK: $VULKAN_SDK"
 
       - name: Configure Eglantine
         run: |
@@ -73,12 +81,13 @@ jobs:
 
       - name: Build Eglantine
         run: |
-          cmake --build build --parallel 2
+          cmake --build build --parallel 2 --verbose
 
-      - name: Upload Windows executable
+      - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
           name: Eglantine-Windows-x64-MSYS2
-          path: build/bin/
+          path: |
+            build/bin/
           if-no-files-found: error
           retention-days: 7
