@@ -1,0 +1,84 @@
+
+name: Eglantine Windows - MSYS2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - nx2
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+      - name: Checkout Eglantine
+        uses: actions/checkout@v4
+        with:
+          ref: nx2
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Configure MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            make
+            autoconf
+            libtool
+            automake-wrapper
+            jq
+            patch
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-qt6-base
+            mingw-w64-x86_64-qt6-charts
+            mingw-w64-x86_64-qt6-tools
+            mingw-w64-x86_64-qt6-translations
+            mingw-w64-x86_64-qt6-svg
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-python-pip
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-vulkan-memory-allocator
+            mingw-w64-x86_64-vulkan-devel
+            mingw-w64-x86_64-glslang
+            mingw-w64-x86_64-boost
+            mingw-w64-x86_64-fmt
+            mingw-w64-x86_64-lz4
+            mingw-w64-x86_64-nlohmann-json
+            mingw-w64-x86_64-zlib
+            mingw-w64-x86_64-zstd
+            mingw-w64-x86_64-enet
+            mingw-w64-x86_64-opus
+            mingw-w64-x86_64-libusb
+            mingw-w64-x86_64-sdl3
+
+      - name: Check environment
+        run: |
+          cmake --version
+          gcc --version
+          python --version
+
+      - name: Configure Eglantine
+        run: |
+          cmake -S . -B build -G "MSYS Makefiles" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DYUZU_TESTS=OFF
+
+      - name: Build Eglantine
+        run: |
+          cmake --build build --parallel 2
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Eglantine-Windows-x64-MSYS2
+          path: build/bin/
+          if-no-files-found: error
+          retention-days: 7
